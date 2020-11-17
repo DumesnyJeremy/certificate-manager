@@ -9,7 +9,9 @@ LOG_PATH="/var/log"
 function usage() {
   echo "Usage: install: $0 -i"
   echo "Usage: daemon: $0 -d"
+  echo "Usage: timer: $0 -t"
   echo "Usage: uninstall: $0 -u"
+  echo "Usage: purge: $0 -p"
 }
 
 function install() {
