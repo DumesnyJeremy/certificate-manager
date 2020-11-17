@@ -3,17 +3,17 @@ package local
 import (
 	"os/exec"
 
-	"ssl-ar/certificate-prober"
-	"ssl-ar/certificate-updater"
+	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
+	updater "github.com/DumesnyJeremy/certificate-manager/manager/updater"
 )
 
 type Local struct {
-	Config         certificate_updater.CertificateUpdateConfig
+	Config         updater.CertificateUpdateConfig
 	CertifRootPath string
 }
 
 // Receives the config in argument and and create an object with the config and the certificate root path.
-func InitCertifUpdater(config certificate_updater.CertificateUpdateConfig, certifRootPath string) (certificate_updater.CertificateUpdater, error) {
+func InitCertifUpdater(config updater.CertificateUpdateConfig, certifRootPath string) (updater.CertificateUpdater, error) {
 	cu, err := initLocalUpdater(config, certifRootPath)
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func InitCertifUpdater(config certificate_updater.CertificateUpdateConfig, certi
 	return cu, nil
 }
 
-func initLocalUpdater(config certificate_updater.CertificateUpdateConfig, certifRootPath string) (*Local, error) {
+func initLocalUpdater(config updater.CertificateUpdateConfig, certifRootPath string) (*Local, error) {
 	return &Local{
 		Config:         config,
 		CertifRootPath: certifRootPath,
@@ -30,7 +30,7 @@ func initLocalUpdater(config certificate_updater.CertificateUpdateConfig, certif
 
 // Send with the client create in the InitMulti,
 // the Certificate and the Private key to the right place, given in the site configuration.
-func (lcu *Local) UpdateCertificate(site certificate_prober.SiteCertProber) error {
+func (lcu *Local) UpdateCertificate(site fetcher.SiteCertProber) error {
 	// Copy the Certificate to the right place given in site config
 	_, err := exec.Command("cp " + lcu.CertifRootPath + "/" + site.GetConfig().URL + "/" +
 		site.GetConfig().URL + ".crt " + site.GetConfig().Location.Certificate).Output()

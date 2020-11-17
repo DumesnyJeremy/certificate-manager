@@ -1,4 +1,4 @@
-package certificate_manager
+package manager
 
 import (
 	"errors"

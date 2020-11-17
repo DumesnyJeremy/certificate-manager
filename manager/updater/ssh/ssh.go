@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
-	"github.com/DumesnyJeremy/certificate-manager/updater"
+	"github.com/DumesnyJeremy/certificate-manager/manager/updater"
 )
 
 type SSH struct {

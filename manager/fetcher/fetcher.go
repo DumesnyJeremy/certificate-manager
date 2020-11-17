@@ -15,11 +15,11 @@ type SiteCertProber interface {
 	RefreshCertifAndGetDaysLeft() (int, error)
 	IsSiteValid() bool
 	Refresh() error
-	GetConfig() Config
+	GetConfig() CertificateFetchConfig
 	GetDomain() string
 }
 
-type Config struct {
+type CertificateFetchConfig struct {
 	Server   string         `mapstructure:"server"`
 	URL      string         `mapstructure:"url"`
 	Port     int            `mapstructure:"port"`
@@ -35,12 +35,12 @@ type LocationConfig struct {
 type Client struct {
 	Domain      string
 	Certificate *x509.Certificate
-	Config      Config
+	Config      CertificateFetchConfig
 }
 
 // Receives multi analyzer configs, parse site by site and
 // build an array of clients (extracted certificate).
-func InitMulti(configSites []Config) []SiteCertProber {
+func InitMulti(configSites []CertificateFetchConfig) []SiteCertProber {
 	sitesCertificates := make([]SiteCertProber, 0)
 	for _, configSite := range configSites {
 		siteCertificate, err := Init(configSite)
@@ -54,7 +54,7 @@ func InitMulti(configSites []Config) []SiteCertProber {
 }
 
 // Build a client by extracting certificate from site.
-func Init(siteConfig Config) (SiteCertProber, error) {
+func Init(siteConfig CertificateFetchConfig) (SiteCertProber, error) {
 	domain, err := publicsuffix.Domain(siteConfig.URL)
 	if err != nil {
 		log.Error("For [", siteConfig.URL, "]; can't found the domain; ", err)
@@ -112,7 +112,7 @@ func (certifExtract *Client) RefreshCertifAndGetDaysLeft() (int, error) {
 	return day, err
 }
 
-func (certifExtract *Client) GetConfig() Config {
+func (certifExtract *Client) GetConfig() CertificateFetchConfig {
 	return certifExtract.Config
 }
 
@@ -122,7 +122,7 @@ func (certifExtract *Client) GetDomain() string {
 
 // Dial connects to the given network address using net.Dial,
 // is a valid certificate for the named host
-func extractCertificate(site Config) (*x509.Certificate, error) {
+func extractCertificate(site CertificateFetchConfig) (*x509.Certificate, error) {
 	fullSite := site.URL + ":" + strconv.Itoa(site.Port)
 	conn, err := tls.Dial("tcp", fullSite, &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
