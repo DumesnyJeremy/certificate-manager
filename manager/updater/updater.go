@@ -1,7 +1,7 @@
 package certificate_updater
 
 import (
-	"github.com/DumesnyJeremy/certificate-manager/fetcher"
+	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
 )
 
 // The 2 types of implementation to upload a certificate.

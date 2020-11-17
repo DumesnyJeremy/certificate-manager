@@ -9,8 +9,8 @@ import (
 	"github.com/DumesnyJeremy/lets-encrypt/providers/dns"
 	"github.com/DumesnyJeremy/notification-service"
 
-	"github.com/DumesnyJeremy/certificate-manager/fetcher"
-	"github.com/DumesnyJeremy/certificate-manager/updater"
+	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
+	"github.com/DumesnyJeremy/certificate-manager/manager/updater"
 )
 
 // Used to respect the Let's Encrypt rate limits. See:

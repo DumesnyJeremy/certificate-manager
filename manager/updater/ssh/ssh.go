@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/DumesnyJeremy/certificate-manager/fetcher"
+	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
 	"github.com/DumesnyJeremy/certificate-manager/updater"
 )
 

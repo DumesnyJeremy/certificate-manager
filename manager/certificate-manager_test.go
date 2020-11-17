@@ -2,14 +2,15 @@ package certificate_manager
 
 import (
 	"errors"
-	"github.com/stretchr/testify/mock"
-	"testing"
 	"github.com/DumesnyJeremy/lets-encrypt"
 	"github.com/DumesnyJeremy/lets-encrypt/providers/dns"
 	"github.com/DumesnyJeremy/notification-service"
+	"github.com/stretchr/testify/mock"
+	"testing"
 
-	"github.com/DumesnyJeremy/certificate-manager/fetcher"
-	"github.com/DumesnyJeremy/certificate-manager/updater"
+	"github.com/DumesnyJeremy/certificate-manager/manager"
+	"github.com/DumesnyJeremy/certificate-manager/manager/fetcher"
+	"github.com/DumesnyJeremy/certificate-manager/manager/updater"
 )
 
 type ClientMock struct {
@@ -68,7 +69,7 @@ func (notifier *Notif) GetName() string {
 }
 
 func TestInitCertManager(t *testing.T) {
-	InitCertificateManager(CertManagerConfig{},
+	manager.InitCertificateManager(manager.CertManagerConfig{},
 		[]certificate_updater.CertificateUpdater{},
 		[]fetcher.SitesPerDomain{},
 		[]notification_service.Notifier{},
@@ -82,8 +83,8 @@ func TestSuccessForceRenew(t *testing.T) {
 		return "", nil
 	}
 	tmp := new(Notif)
-	CertManager := CertManager{Config: CertManagerConfig{
-		Recipients: []RecipientConfig{{
+	CertManager := manager.CertManager{Config: manager.CertManagerConfig{
+		Recipients: []manager.RecipientConfig{{
 			Notifier:   "Rocket",
 			Categories: []string{"HIGH"},
 			Dest:       []string{"toto"},
@@ -107,8 +108,8 @@ func TestSendMessageErrorTriggerAlertForSite(t *testing.T) {
 		return "", errors.New("Fake error.")
 	}
 	tmp := new(Notif)
-	CertManager := CertManager{Config: CertManagerConfig{
-		Recipients: []RecipientConfig{{
+	CertManager := manager.CertManager{Config: manager.CertManagerConfig{
+		Recipients: []manager.RecipientConfig{{
 			Notifier:   "Rocket",
 			Categories: []string{"HIGH"},
 			Dest:       []string{"toto"},
@@ -128,7 +129,7 @@ func TestSendMessageErrorTriggerAlertForSite(t *testing.T) {
 }
 
 func TestSuccessFailTriggerAlertForSite(t *testing.T) {
-	CertManager := CertManager{}
+	CertManager := manager.CertManager{}
 	sites := FakeSitesCertificates(1, 30)
 
 	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
@@ -142,7 +143,7 @@ func TestSuccessFailTriggerAlertForSite(t *testing.T) {
 }
 
 func TestFailTriggerAlertForSite(t *testing.T) {
-	CertManager := CertManager{}
+	CertManager := manager.CertManager{}
 	sites := FakeSitesCertificates(1, 30)
 
 	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
@@ -168,7 +169,7 @@ func TestCheckRenewReturnRenew(t *testing.T) {
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 10, nil
 	}
-	CertManager := CertManager{}
+	CertManager := manager.CertManager{}
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
@@ -193,7 +194,7 @@ func TestCheckRenewReturnHigh(t *testing.T) {
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 10, nil
 	}
-	CertManager := CertManager{}
+	CertManager := manager.CertManager{}
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
@@ -218,7 +219,7 @@ func TestSuccessCheckRenew(t *testing.T) {
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 10, nil
 	}
-	CertManager := CertManager{}
+	CertManager := manager.CertManager{}
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
@@ -239,8 +240,8 @@ func TestParseSites(t *testing.T) {
 		return 50, errors.New("Forced error")
 	}
 	tmp := new(Notif)
-	CertManager := CertManager{Config: CertManagerConfig{
-		Recipients: []RecipientConfig{{
+	CertManager := manager.CertManager{Config: manager.CertManagerConfig{
+		Recipients: []manager.RecipientConfig{{
 			Notifier:   "Rocket",
 			Categories: []string{"ERROR"},
 			Dest:       []string{"toto"},
