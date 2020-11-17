@@ -4,12 +4,12 @@ import (
 	"errors"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"github.com/DumesnyJeremy/lets-encrypt"
+	"github.com/DumesnyJeremy/lets-encrypt/providers/dns"
+	"github.com/DumesnyJeremy/notification-service"
 
-	"ssl-ar/certificate-updater"
-	"ssl-ar/lets-encrypt"
-	"ssl-ar/lets-encrypt/providers/dns"
-	"ssl-ar/notification-service"
-	"ssl-ar/certificate-prober"
+	"github.com/DumesnyJeremy/certificate-manager/fetcher"
+	"github.com/DumesnyJeremy/certificate-manager/updater"
 )
 
 type ClientMock struct {
@@ -19,12 +19,12 @@ type ClientMock struct {
 func (_m *ClientMock) DaysLeft() int {
 	return 30
 }
-func (_m *ClientMock) GetConfig() certificate_prober.Config {
-	return certificate_prober.Config{
+func (_m *ClientMock) GetConfig() fetcher.Config {
+	return fetcher.Config{
 		Server:   "Test server",
 		URL:      "1.serv.io",
 		Port:     443,
-		Location: certificate_prober.LocationConfig{},
+		Location: fetcher.LocationConfig{},
 	}
 }
 func (_m *ClientMock) IsSiteValid() bool {
@@ -42,8 +42,8 @@ func (_m *ClientMock) RefreshCertifAndGetDaysLeft() (int, error) {
 
 var RefreshCertifAndSendDayLeftMocked func() (int, error)
 
-func FakeSitesCertificates(numberOfSites, dayLeftSites int) []certificate_prober.SiteCertProber {
-	sitesCertificates := make([]certificate_prober.SiteCertProber, 0)
+func FakeSitesCertificates(numberOfSites, dayLeftSites int) []fetcher.SiteCertProber {
+	sitesCertificates := make([]fetcher.SiteCertProber, 0)
 	for i := 1; i <= numberOfSites; i++ {
 		siteCertificate := FakeSiteCertificate()
 		sitesCertificates = append(sitesCertificates, siteCertificate)
@@ -51,7 +51,7 @@ func FakeSitesCertificates(numberOfSites, dayLeftSites int) []certificate_prober
 	return sitesCertificates
 }
 
-func FakeSiteCertificate() certificate_prober.SiteCertProber {
+func FakeSiteCertificate() fetcher.SiteCertProber {
 	return &ClientMock{}
 }
 
@@ -70,7 +70,7 @@ func (notifier *Notif) GetName() string {
 func TestInitCertManager(t *testing.T) {
 	InitCertificateManager(CertManagerConfig{},
 		[]certificate_updater.CertificateUpdater{},
-		[]certificate_prober.SitesPerDomain{},
+		[]fetcher.SitesPerDomain{},
 		[]notification_service.Notifier{},
 		[]dns.DNSServer{},
 		lets_encrypt.LetsEncrypt{},
@@ -92,7 +92,7 @@ func TestSuccessForceRenew(t *testing.T) {
 		Notifiers: []notification_service.Notifier{tmp}}
 	sites := FakeSitesCertificates(1, 30)
 
-	CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 	sitesToRenew := CertManager.GetSitesToRenew()
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 50, nil
@@ -117,7 +117,7 @@ func TestSendMessageErrorTriggerAlertForSite(t *testing.T) {
 		Notifiers: []notification_service.Notifier{tmp}}
 	sites := FakeSitesCertificates(1, 30)
 
-	CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 	sitesToRenew := CertManager.GetSitesToRenew()
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 50, nil
@@ -131,7 +131,7 @@ func TestSuccessFailTriggerAlertForSite(t *testing.T) {
 	CertManager := CertManager{}
 	sites := FakeSitesCertificates(1, 30)
 
-	CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 	sitesToRenew := CertManager.GetSitesToRenew()
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 50, errors.New("Forced error")
@@ -145,7 +145,7 @@ func TestFailTriggerAlertForSite(t *testing.T) {
 	CertManager := CertManager{}
 	sites := FakeSitesCertificates(1, 30)
 
-	CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 	RefreshCertifAndSendDayLeftMocked = func() (int, error) {
 		return 50, errors.New("Forced error")
 	}
@@ -172,7 +172,7 @@ func TestCheckRenewReturnRenew(t *testing.T) {
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
-		CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+		CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 		sitesToRenew := CertManager.GetSitesToRenew()
 		if err := CertManager.Renew(sitesToRenew[0]); err == nil {
 			t.Error("Error: ", err)
@@ -197,7 +197,7 @@ func TestCheckRenewReturnHigh(t *testing.T) {
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
-		CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+		CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 		sitesToRenew := CertManager.GetSitesToRenew()
 		if err := CertManager.Renew(sitesToRenew[0]); err == nil {
 			t.Error("Error: ", err)
@@ -222,7 +222,7 @@ func TestSuccessCheckRenew(t *testing.T) {
 	for _, argument := range arguments {
 		sites := FakeSitesCertificates(argument.numberOfSites, argument.dayLeftSites)
 
-		CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+		CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 		sitesToRenew := CertManager.GetSitesToRenew()
 		if err := CertManager.Renew(sitesToRenew[0]); err == nil {
 			t.Error("Error: ", err)
@@ -247,6 +247,6 @@ func TestParseSites(t *testing.T) {
 		}},
 	},
 		Notifiers: []notification_service.Notifier{tmp}}
-	CertManager.IndexedSites = certificate_prober.IndexSitesPerDomains(sites)
+	CertManager.IndexedSites = fetcher.IndexSitesPerDomains(sites)
 	CertManager.ParseSites()
 }
