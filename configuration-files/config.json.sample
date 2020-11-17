@@ -1,0 +1,98 @@
+{
+  "loop_restart_min": 1440,
+  "certificates_root_path": "/etc/certificate-manager/letsencrypt/certificates",
+  "certificate_manager": {
+    "recipients": [
+      {
+        "notifier": "rocket-example",
+        "categories": [
+          "RENEW",
+          "ERROR"
+        ],
+        "dest": [
+          "@user",
+          "#Channel"
+        ]
+      },
+      {
+        "notifier": "gmail-example",
+        "categories": [
+          "RENEW",
+          "ERROR"
+        ],
+        "dest": [
+          "example@example.fr"
+        ]
+      }
+    ]
+  },
+  "dns_servers": [
+    {
+      "name": "Serv 1",
+      "type": "pdns",
+      "url": "http://0.0.0.0:8080",
+      "api_key": "ApiKey",
+      "server_id": "localhost"
+    }
+  ],
+  "sites": [
+    {
+      "server": "Serv 1",
+      "url": "www.example.com",
+      "port": 443,
+      "location": {
+        "certificate": "/etc/letsencrypt/live/www.example.com/fullchain.pem",
+        "private_key": "/etc/letsencrypt/live/www.example.com/privkey.pem"
+      }
+    }
+  ],
+  "updaters": [
+    {
+      "name": "Serv 1",
+      "type": "remote",
+      "certificates_owner": "root",
+      "remote_connection": {
+        "protocol": "SSH",
+        "port": "22",
+        "hostname": "0.0.0.0"
+      },
+      "reload_cmd": "systemctl reload nginx"
+    },
+    {
+      "name": "Serv 1",
+      "type": "local",
+      "certificates_owner": "root",
+      "restart_cmd": "systemctl reload nginx"
+    }
+  ],
+  "notifiers": [
+    {
+      "name": "gmail-example",
+      "type": "mail",
+      "source": {
+        "from": "example@example.com",
+        "pwd": "secretPassword"
+      },
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "tls": true,
+      "debug": false
+    },
+    {
+      "name": "rocket-example",
+      "type": "rocket",
+      "source": {
+        "from": "example@gmail.com",
+        "pwd": "secretPassword"
+      },
+      "host": "rocket.example.io",
+      "port": 443,
+      "tls": true,
+      "debug": false
+    }
+  ],
+  "lets_encrypt_user": {
+    "mail": "example@gmail.com",
+    "account_path": "/etc/certificate-manager/letsencrypt/account"
+  }
+}
