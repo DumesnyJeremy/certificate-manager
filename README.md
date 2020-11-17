@@ -16,132 +16,73 @@ Also, a log file will be filled with all the information that return the program
 * These 200 sites per domain will be spread over the last month of validity of the certificate to comply with these rate limits.
 * From this last month, all renew would be split by 50 renew per week to respect those rate limits.
 
-###Usage
-#### Using a configuration file
-If you want to create a configuration file, you can use [Viper](https://github.com/spf13/viper#putting-values-into-viper) to read,
-and fill this structure by Unmarshalling the config file. The `mapstructure` will allow you to read all the configuration file formats.
+## Usage
 
-```go
-type Config struct {
-	CertManager    certificate_manager.CertManagerConfig          `mapstructure:"certificate_manager"`
-	DNSServers      []dns.DNSServerConfig                         `mapstructure:"dns_servers"`
-	Sites           []certificate_prober.Config                   `mapstructure:"sites"`
-	Updaters        []certificate_updater.CertificateUpdateConfig `mapstructure:"updaters"`
-	Notifiers       []notification_service.NotifierConfig         `mapstructure:"notifiers"`
-	LetsEncryptUser lets_encrypt.LetsEncryptUserConfig            `mapstructure:"lets_encrypt_user"`
-	CertRootPath    string                                        `mapstructure:"certificates_root_path"`
-	RestartMinutes  int64                                         `mapstructure:"loop_restart_min"`
-}
+### Linux Installation
+```yaml
+Create the executable:
+$ go build -mod=vendor
 ```
 
-Here is an example of a configuration file in json format with everything this program needs.
-
-```json
-{
-  "loop_restart_min": 1440,
-  "certificates_root_path": "/etc/ssl-alert-renew/letsencrypt/certificates",
-  "certificate_manager": {
-    "recipients": [
-      {
-        "notifier": "rocket-example",
-        "categories": [
-          "RENEW",
-          "ERROR"
-        ],
-        "dest": [
-          "@example.example"
-        ]
-      },
-      {
-        "notifier": "gmail-example",
-        "categories": [
-          "RENEW",
-          "ERROR"
-        ],
-        "dest": [
-          "example@example.fr"
-        ]
-      }
-    ]
-  },
-  "dns_servers": [
-    {
-      "name": "Example Serv",
-      "type": "pdns",
-      "url": "http://0.0.0.0:8080",
-      "api_key": "api key",
-      "server_id": "localhost"
-    }
-  ],
-  "sites": [
-    {
-      "server": "example",
-      "url": "example.re",
-      "port": 443,
-      "location": {
-        "certificate": "/etc/letsencrypt/live/blah.example.re/fullchain.pem",
-        "private_key": "/etc/letsencrypt/live/blah.example.re/privkey.pem"
-      }
-    },
-    {
-      "server": "example",
-      "url": "www.example.fr",
-      "port": 443,
-      "location": {
-       "certificate": "path/to/current/letsencrypt/certif/www.example.fr/fullchain.pem",
-       "private_key": "path/to/current/letsencrypt/certif/www.example.fr/privkey.pem"
-      }
-    }
-  ],
-  "updaters": [
-    {
-      "name": "example",
-      "type": "remote",
-      "certificates_owner": "root",
-      "remote_connection": {
-        "protocol": "SSH",
-        "port": "22",
-        "hostname": "0.0.0.0"
-      },
-      "reload_cmd": "systemctl reload nginx"
-    },
-    {
-      "name": "example",
-      "type": "local",
-      "certificates_owner": "root",
-      "restart_cmd": "systemctl reload nginx"
-    }
-  ],
-  "notifiers": [
-    {
-      "name": "gmail-example",
-      "type": "mail",
-      "source": {
-        "from": "certif.expire@gmail.com",
-        "pwd": "secret pwd"
-      },
-      "host": "smtp.gmail.com",
-      "port": 587,
-      "tls": true,
-      "debug": false
-    },
-    {
-      "name": "rocket-example",
-      "type": "rocket",
-      "source": {
-        "from": "example@example.com",
-        "pwd": "secret_pwd"
-      },
-      "host": "rocket.example.io",
-      "port": 443,
-      "tls": true,
-      "debug": false
-    }
-  ],
-  "lets_encrypt_user": {
-    "mail": "example@gmail.com",
-    "account_path": "/etc/ssl-alert-renew/letsencrypt/account"
-  }
-}
+```yaml
+Set up the Config directory and copy the binary: 
+$ sudo ./setup-prog.sh -i
 ```
 
+Go to `$ cd /etc/certificate-manager`, you will found 3 `$ config."extension".sample`,
+choose the one you want and rename the file `$ sudo mv config."Extension".sample config."Extension"` 
+and start filling it with your information.
+
+You can try it by executing the program. This is what happen when you have a site certificate to renew. 
+The communication will be established, and the DNS-01 challenge will be resolved.
+```dockerfile
+INFO[17/11/2020 17:44:22] [INFO] acme: Registering account for example@gmail.com 
+INFO[17/11/2020 17:44:24] [INFO] [www.example.com] acme: Obtaining bundled SAN certificate 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] AuthURL: https://acme-staging-v02.api.letsencrypt.org/acme/authz-v3/1234567 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: Could not find solver for: tls-alpn-01 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: Could not find solver for: http-01 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: use dns-01 solver 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: Preparing to solve DNS-01 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: Trying to solve DNS-01 
+INFO[17/11/2020 17:44:25] [INFO] [www.example.com] acme: Checking DNS record propagation using [192.0.0.0:53 0.0.0.0:53 0.0.0.0:53 0.0.0.0:53 0.0.0:53] 
+INFO[17/11/2020 17:44:27] [INFO] Wait for propagation [timeout: 1m0s, interval: 2s] 
+INFO[17/11/2020 17:44:33] [INFO] [www.example.com] The server validated our request 
+INFO[17/11/2020 17:44:33] [INFO] [www.example.com] acme: Cleaning DNS-01 challenge 
+INFO[17/11/2020 17:44:33] [INFO] [www.example.com] acme: Validations succeeded; requesting certificates 
+INFO[17/11/2020 17:44:34] [INFO] [www.example.com] Server responded with a certificate. 
+INFO[17/11/2020 17:44:34] [www.example.com] New certificate upload; Rocket to @example 
+INFO[17/11/2020 17:44:36] [www.example.com] New certificate upload; Mail to example@gmail.fr 
+INFO[17/11/2020 17:44:36] [www.example.com] Force Renew; Rocket to @example 
+INFO[17/11/2020 17:44:37] [www.example.com] Force Renew; Mail to example@gmail.fr 
+```
+
+#### Use the Program as a Timer
+```yaml
+Set up the timer: 
+$ sudo ./setup-prog.sh -t
+
+Enable the timer: 
+$ systemctl enable certificate-manager.timer
+
+Restart the timer: 
+$ systemctl restart certificate-manager.timer
+
+Check timer status: 
+$ systemctl status certificate-manager.timer
+```
+
+#### Use the Program as a Daemon
+```yaml
+Set up the daemon: 
+$ sudo ./setup-prog.sh -d
+
+Start the daemon: 
+$ systemctl start certificate-manager
+
+Check daemon status: 
+$ systemctl status certificate-manager
+```
+#### Delete configuration files and uninstall Timer/Daemon
+```yaml
+$ sudo ./setup-prog.sh -p -u
+```
