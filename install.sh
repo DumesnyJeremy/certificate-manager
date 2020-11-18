@@ -7,11 +7,12 @@ BINARY_PATH="/usr/local/bin"
 LOG_PATH="/var/log"
 
 function usage() {
-  echo "Usage: install: $0 -i"
-  echo "Usage: daemon: $0 -d"
-  echo "Usage: timer: $0 -t"
-  echo "Usage: uninstall: $0 -u"
-  echo "Usage: purge: $0 -p"
+  echo "Flags:"
+  echo "  Install:   $0 -i   Copy the binary in ${BINARY_PATH} and create the configuration file in /etc/${CONF_DIR_NAME}."
+  echo "  Uninstall: $0 -u   Delete the copy of the binary, and if the Daemon or the Timer are setup, it will disable them."
+  echo "  Purge:     $0 -p   Delete the configuration file."
+  echo "  Daemon:    $0 -d   Create the .service file in ${SERVICE_PATH}/."
+  echo "  Timer:     $0 -t   Create the .timer and the .service in ${SERVICE_PATH}/."
 }
 
 function install() {
@@ -59,10 +60,7 @@ KillMode=process
 WantedBy=multi-user.target
 EOF
   chmod 640 ${SERVICE_PATH}/${BINARY_FILE}.service
-  systemctl daemon-reload
-  echo "* ${BINARY_FILE}.service copied in ${SERVICE_PATH} ."
-  systemctl enable ${BINARY_FILE}.service
-  echo "* Systemctl enable."
+  echo "* ${BINARY_FILE}.service created in ${SERVICE_PATH} ."
   mkdir "${LOG_PATH}/${BINARY_FILE}"
   touch "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
   chmod 666 "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
@@ -77,13 +75,13 @@ Description=Run certificate-manager daily
 Requires=${BINARY_FILE}.service
 
 [Timer]
-OnCalendar=*-*-* 0:0:10
-AccuracySec=1s
+OnCalendar=daily
+Persistant = vrai
 
 [Install]
 WantedBy=timer.target
 EOF
-
+echo "* ${BINARY_FILE}.timer created in ${SERVICE_PATH} ."
   cat <<EOF >${SERVICE_PATH}/${BINARY_FILE}.service
 [Unit]
 Description=Verify certificate expiration and renew them
@@ -102,10 +100,12 @@ KillMode=process
 [Install]
 WantedBy=multi-user.target
 EOF
-  echo "* Log File created."
+  echo "* ${BINARY_FILE}.timer created in ${SERVICE_PATH} ."
   mkdir "${LOG_PATH}/${BINARY_FILE}"
   touch "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
   chmod 666 "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
+  echo "* Log File created."
+  echo "== Timer created and launched =="
 }
 
 function uninstall() {
@@ -147,30 +147,51 @@ function purge() {
 
 function is_user_root() { [ "$(id -u)" -eq 0 ]; }
 
-if is_user_root; then
-  while getopts "idtup" OPT; do
+
+  while getopts "idtuph" OPT; do
     case "${OPT}" in
     i)
+      if is_user_root; then
       install
-      ;;
+      else
+  echo "Please run as root."
+  exit 1
+  fi
+  ;;
     d)
+       if is_user_root; then
       daemon
+      else
+  echo "Please run as root."
+  exit 1
+  fi
       ;;
     t)
+       if is_user_root; then
       timer
+      else
+  echo "Please run as root."
+  exit 1
+  fi
       ;;
     u)
+       if is_user_root; then
       uninstall
+      else
+  echo "Please run as root."
+  exit 1
+  fi
       ;;
     p)
+       if is_user_root; then
       purge
+      else
+  echo "Please run as root."
+  exit 1
+  fi
       ;;
-    \?)
+    h)
       usage
       ;;
     esac
   done
-else
-  echo "Please run as root."
-  exit 1
-fi
