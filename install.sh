@@ -49,6 +49,7 @@ After=syslog.target network-online.target
 Environment="HOME=/root"
 Type=simple
 ExecStart=/usr/local/bin/${BINARY_FILE} -d
+StandardOutput=${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log
 #User=deepak
 #Group=admin
 Restart=on-failure
@@ -65,6 +66,7 @@ EOF
   mkdir "${LOG_PATH}/${BINARY_FILE}"
   touch "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
   chmod 666 "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
+  echo "* Log File created."
   echo "== Daemon created and launched =="
 }
 
@@ -75,7 +77,7 @@ Description=Run certificate-manager daily
 Requires=${BINARY_FILE}.service
 
 [Timer]
-OnCalendar=*-*-* 1:0:0
+OnCalendar=*-*-* 0:0:10
 AccuracySec=1s
 
 [Install]
@@ -100,6 +102,7 @@ KillMode=process
 [Install]
 WantedBy=multi-user.target
 EOF
+  echo "* Log File created."
   mkdir "${LOG_PATH}/${BINARY_FILE}"
   touch "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
   chmod 666 "${LOG_PATH}/${BINARY_FILE}/${BINARY_FILE}.log"
